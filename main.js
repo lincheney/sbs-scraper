@@ -1,4 +1,7 @@
 function duration_to_string(seconds) {
+    if (!seconds) {
+        return 'unknown';
+    }
     var minutes = Math.round(seconds / 60);
     seconds = seconds % 60;
     return minutes + ':' + ('0' + seconds).slice(-2);
@@ -87,11 +90,14 @@ function process_video_data(data, query) {
         video['_id'] = /\d+$/.exec(video['id'])[0];
         video['thumbnail'] = video['plmedia$defaultThumbnailUrl']
 
-        video['duration'] = duration_to_string(video['media$content'][0]['plfile$duration']);
+        var duration = video['media$content'][0];
+        duration = (duration && duration['plfile$duration']);
+
+        video['duration'] = duration_to_string(duration);
         video['published'] = datetime_to_string(video['pubDate']);
         video['expiry'] = datetime_to_string(video['media$expirationDate']);
 
-        if (query.minDuration && query.minDuration > video['media$content'][0]['plfile$duration']) {
+        if (query.minDuration && query.minDuration > (duration || 0)) {
             continue;
         }
         if (query.published && datetime_to_string(query.published) != video.published) {

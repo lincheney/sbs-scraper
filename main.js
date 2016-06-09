@@ -24,6 +24,8 @@ function parse_query(query) {
             // recreate date to match with locale
             date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             data['published'] = date;
+        } else if(tokens[i].startsWith('videoId=')) {
+            data['videoId'] = tokens[i].split('=', 2)[1];
         } else {
             data.query.push(tokens[i]);
         }
@@ -41,7 +43,10 @@ function build_query(query) {
         data['byPubDate'] = query.published.getTime() + '~' + (query.published.getTime() + 24*3600*1000);
     }
 
-    if (query.query == '') {
+    if (query.videoId) {
+        data.url = 'http://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-od2-video/' + query.videoId;
+        data.parser = JSON.parse;
+    } else if (query.query == '') {
         data.url = 'http://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-section-sbstv';
         data.parser = JSON.parse;
     } else {

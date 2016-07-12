@@ -149,14 +149,27 @@ function process_link_data(data) {
     });
 
     // group all the links by type
+    links = _.partition(links, 'backup');
+    var backup_links = links[0];
+    links = links[1];
+
+    links = format_links(links);
+    backup_links = format_links(backup_links);
+    data.links = [
+        {links: links},
+        {links: backup_links, title: 'Backup links'},
+    ];
+    console.log(data.links);
+    return data;
+}
+
+function format_links(links) {
     links = _.pairs(_.groupBy(links, 'type'));
     for(var i = 0; i < links.length; i ++) {
         links[i] = {type: links[i][0], urls: links[i][1]};
     }
     links = _.sortBy(links, 'type');
-
-    data.links = links;
-    return data;
+    return links;
 }
 
 function set_loading(context, loading) {

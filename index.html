@@ -102,14 +102,24 @@
     <div id='link-template'>
         <table class='table link-table'><tbody>
         <!--{{#links}}-->
-        <tr>
-            <td class='video-type'><span class='label'>{{type}}</span></td>
-            <!--{{#urls}}-->
-            <td class='video-link'><span class='video-link'>
-                <a href='{{url}}'>{{name}}</a>
-            </span></td>
-            <!--{{/urls}}-->
-        </tr>
+            <!-- {{#title}} -->
+            <!-- {{#links.length}} -->
+            <tr><td>
+                <h5>{{title}}</h5>
+            </td></tr>
+            <!-- {{/links.length}} -->
+            <!-- {{/title}} -->
+
+            <!--{{#links}}-->
+            <tr>
+                <td class='video-type'><span class='label'>{{type}}</span></td>
+                <!--{{#urls}}-->
+                <td class='video-link'><span class='video-link'>
+                    <a href='{{url}}'>{{name}}</a>
+                </span></td>
+                <!--{{/urls}}-->
+            </tr>
+            <!--{{/links}}-->
         <!--{{/links}}-->
         </tbody></table>
 

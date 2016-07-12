@@ -147,6 +147,7 @@ function process_link_data(data) {
     links.sort(function(a, b) {
         return (b.bitrate || 0) - (a.bitrate || 0);
     });
+    data.live = _.any(links, 'live');
 
     // group all the links by type
     links = _.partition(links, 'backup');

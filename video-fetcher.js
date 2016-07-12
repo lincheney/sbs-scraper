@@ -148,7 +148,7 @@ function get_urls_from_m3u(url, callback) {
         dataType: 'text',
         error: function(xhr, status, error) {
             console.log('Error fetching: ' + url);
-            callback(links);
+            callback([]);
         },
         success: function(data, status, xhr) {
             // data is in m3u playlist format

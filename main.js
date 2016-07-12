@@ -156,11 +156,12 @@ function process_link_data(data) {
 
     links = format_links(links);
     backup_links = format_links(backup_links);
-    data.links = [
+    links = [
         {links: links},
         {links: backup_links, title: 'Backup links'},
     ];
-    console.log(data.links);
+    links = _.filter(links, function(l) { return l.links.length; });
+    data.links = links;
     return data;
 }
 

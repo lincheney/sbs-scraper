@@ -89,14 +89,10 @@ function parse_video_sources(sources, base, links, callback) {
     var match = /^http(s?):\/\/sbs[a-z]+-([vl])h\.akamaihd\.net/.exec(src);
     if (match) {
         var parts = parse_url(src);
-        var live = (match[2] == 'l');
         // encrypted
         if (!parts.pathname.match('manifest.f4m')) {
             // m3u
             get_urls_from_m3u(src, function(new_links) {
-                for(var i = 0; i < new_links.length; i ++) {
-                    new_links[i].live = live;
-                }
                 parse_video_sources(sources, base, links.concat(new_links), callback);
             });
             return;
@@ -112,14 +108,14 @@ function parse_video_sources(sources, base, links, callback) {
             var bitrates = match[1].split(',');
             for(var i = 0; i < bitrates.length; i ++) {
                 if (bitrates[i] != '') {
-                    links.push({type: 'F4M', url: src.replace(match[1], bitrates[i] + ','), live: live});
+                    links.push({type: 'F4M', url: src.replace(match[1], bitrates[i] + ',')});
                 }
             }
         } else if (parts.pathname.match(/_\d+K\.mp4/)) {
-            links.push({type: 'F4M', url: src, live: live});
+            links.push({type: 'F4M', url: src});
         } else {
             // multi bitrate but can't get separate link per bitrate ...
-            links.push({type: 'F4M', url: src, live: live});
+            links.push({type: 'F4M', url: src});
         }
 
     } else if (src.match(/^http(s?):\/\/sbs[a-z]+-f\.akamaihd\.net/)) {

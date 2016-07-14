@@ -75,6 +75,14 @@ button.link-fetcher {
 .link-table tr td.video-link a:not(:hover) {
     text-decoration: none;
 }
+.link-table tr.link-title:not(:first-child) {
+    border-top: 1px solid grey;
+}
+.link-table tr.link-title .link-title-text {
+    color: grey;
+    text-align: left;
+    margin: 0;
+}
 
 .spinner {
     border-top: 3px solid transparent;

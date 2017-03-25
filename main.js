@@ -93,7 +93,10 @@ function process_video_data(data, query) {
         var video = videos[i];
 
         video['_id'] = /\d+$/.exec(video['id'])[0];
-        video['thumbnail'] = video['plmedia$defaultThumbnailUrl']
+        var thumbnail = video['plmedia$defaultThumbnailUrl'];
+        // parse {ssl:https\://...:http\://...}/abc/xyz
+        var parts = thumbnail.match(/({ssl:((\\.|[^\\])*):.*})?(.*)/);
+        video['thumbnail'] = (parts[2] || '').replace(/\\(.)/, '$1') + parts[4];
 
         var duration = video['media$content'][0];
         duration = (duration && duration['plfile$duration']);

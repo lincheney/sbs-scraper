@@ -12,6 +12,10 @@ function datetime_to_string(date) {
     return (date - (new Date(0))) != 0 && date.toDateString();
 }
 
+function slash_unescape(string) {
+    return string.replace(/\\(.)/g, '$1');
+}
+
 function parse_query(query) {
     var tokens = query.split(/\s+/);
     data = {query: []};
@@ -93,10 +97,10 @@ function process_video_data(data, query) {
         var video = videos[i];
 
         video['_id'] = /\d+$/.exec(video['id'])[0];
-        var thumbnail = video['plmedia$defaultThumbnailUrl'];
+        var thumbnail = slash_unescape(video['plmedia$defaultThumbnailUrl']);
         // parse {ssl:https\://...:http\://...}/abc/xyz
         var parts = thumbnail.match(/({ssl:((\\.|[^\\])*):.*})?(.*)/);
-        video['thumbnail'] = (parts[2] || '').replace(/\\(.)/, '$1') + parts[4];
+        video['thumbnail'] = slash_unescape(parts[2] || '') + parts[4];
 
         var duration = video['media$content'][0];
         duration = (duration && duration['plfile$duration']);

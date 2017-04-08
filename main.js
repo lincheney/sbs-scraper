@@ -44,14 +44,14 @@ function build_query(query) {
     }
 
     if (query.videoId) {
-        data.url = 'http://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-od2-video/' + query.videoId;
+        data.url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-od2-video/' + query.videoId;
         data.parser = JSON.parse;
     } else if (query.query == '') {
-        data.url = 'http://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-section-sbstv';
+        data.url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-section-sbstv';
         data.parser = JSON.parse;
     } else {
         // use /suggest endpoint when query is given so we get sorted results
-        data.url = 'http://www.sbs.com.au/api/video_search/suggest/';
+        data.url = 'https://www.sbs.com.au/api/video_search/suggest/';
         data.q = query.query;
         data.parser = function(response) { return JSON.parse(JSON.parse(response)); };
     }

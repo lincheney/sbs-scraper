@@ -14,7 +14,7 @@ function bitrate_from_url(url) {
 }
 
 function fetch_video_links(id, callback) {
-    var url = 'http://www.sbs.com.au/api/video_pdkvars/id/' + id;
+    var url = 'https://www.sbs.com.au/api/video_pdkvars/id/' + id;
 
     $.get({
         url: url,
@@ -29,7 +29,7 @@ function fetch_video_links(id, callback) {
             for(var i = 0; i < data.length; i ++) {
                 var kv = data[i].split('=', 2);
                 if (decodeURIComponent(kv[0]).startsWith('releaseUrls') && kv[1]) {
-                    smils.push('http:' + decodeURIComponent(kv[1]));
+                    smils.push('https:' + decodeURIComponent(kv[1]));
                 }
             }
 

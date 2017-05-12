@@ -16,6 +16,18 @@ function slash_unescape(string) {
     return string.replace(/\\(.)/g, '$1');
 }
 
+function bypass_cors(data) {
+    var url = data.url + '?' + $.param(data.data);
+    delete data.data;
+    data.url = 'https://allorigins.us/get?url=' + encodeURIComponent(url);
+    data.dataType = 'json';
+    var callback = data.success;
+    data.success = function(data, status, xhr) {
+        callback(data.contents, status, xhr);
+    }
+    return $.get(data);
+}
+
 function parse_query(query) {
     var tokens = query.split(/\s+/);
     data = {query: []};
@@ -71,10 +83,9 @@ function search_videos(query, callback) {
     delete query.url;
     delete query.parser;
 
-    $.get({
+    bypass_cors({
         url: url,
         data: query,
-        dataType: 'text',
         error: function(xhr, status, error) {
             callback({error: 'Failed to connect to API'});
         },

@@ -47,9 +47,14 @@ function parse_query(query) {
             data['minDuration'] = tokens[i].split('=', 2)[1]*1;
         } else if(tokens[i].startsWith('published=')) {
             var date = new Date(tokens[i].split('=', 2)[1]);
-            // recreate date to match with locale
-            date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            data['published'] = date;
+            if (isNaN(date.getTime())) {
+                // invalid date
+                // TODO: proper error handling
+            } else {
+                // recreate date to match with locale
+                date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                data['published'] = date;
+            }
         } else if(tokens[i].startsWith('videoId=')) {
             data['videoId'] = tokens[i].split('=', 2)[1];
         } else {

@@ -61,15 +61,15 @@ function build_query(query) {
 
     if (query.videoId) {
         data.url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-od2-video/' + query.videoId;
-        data.parser = JSON.parse;
+        data.parser = function(response) { return JSON.parse(response).entries; };
     } else if (query.query == '') {
         data.url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-section-sbstv';
-        data.parser = JSON.parse;
+        data.parser = function(response) { return JSON.parse(response).entries; };
     } else {
-        // use /suggest endpoint when query is given so we get sorted results
-        data.url = 'https://www.sbs.com.au/api/video_search/suggest/';
+        // use /video_search endpoint when query is given so we get sorted results
+        data.url = 'https://www.sbs.com.au/api/video_search/v2/';
         data.q = query.query;
-        data.parser = function(response) { return JSON.parse(JSON.parse(response)); };
+        data.parser = function(response) { return JSON.parse(response).entries; };
     }
     return data;
 }
@@ -95,7 +95,7 @@ function search_videos(query, callback) {
             } catch(err) {
                 callback({error: 'Malformed data: ' + err});
             }
-            callback({videos: data.entries}, parsed_query);
+            callback({videos: data}, parsed_query);
         }
     })
 }

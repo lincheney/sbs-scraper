@@ -23,11 +23,16 @@ function bypass_cors(data) {
         delete data.data;
     }
 
+    // using https://github.com/gnuns/AllOrigins to bypass cors
     data.url = 'https://allorigins.us/get?url=' + encodeURIComponent(url);
     data.dataType = 'json';
     var callback = data.success;
     data.success = function(data, status, xhr) {
-        callback(data.contents, status, xhr);
+        if (data.http_code != 200) {
+            data.error(xhr, data.http_code, 'error');
+        } else {
+            callback(data.contents, status, xhr);
+        }
     }
     return $.get(data);
 }

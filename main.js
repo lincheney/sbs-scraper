@@ -27,9 +27,10 @@ function bypass_cors(data) {
     data.url = 'https://allorigins.us/get?url=' + encodeURIComponent(url);
     data.dataType = 'json';
     var callback = data.success;
+    var error_cb = data.error;
     data.success = function(data, status, xhr) {
-        if (data.http_code != 200) {
-            data.error(xhr, data.http_code, 'error');
+        if (data.status.http_code != 200) {
+            error_cb(xhr, data.status.http_code, 'error');
         } else {
             callback(data.contents, status, xhr);
         }

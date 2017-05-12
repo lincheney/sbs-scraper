@@ -16,9 +16,8 @@ function bitrate_from_url(url) {
 function fetch_video_links(id, callback) {
     var url = 'https://www.sbs.com.au/api/video_pdkvars/id/' + id;
 
-    $.get({
+    bypass_cors({
         url: url,
-        dataType: 'text',
         error: function(xhr, status, error) {
             callback({error: 'Error loading ' + url});
         },

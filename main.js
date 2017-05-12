@@ -17,8 +17,12 @@ function slash_unescape(string) {
 }
 
 function bypass_cors(data) {
-    var url = data.url + '?' + $.param(data.data);
-    delete data.data;
+    var url = data.url;
+    if (data.data) {
+        url += '?' + $.param(data.data);
+        delete data.data;
+    }
+
     data.url = 'https://allorigins.us/get?url=' + encodeURIComponent(url);
     data.dataType = 'json';
     var callback = data.success;

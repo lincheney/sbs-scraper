@@ -83,6 +83,8 @@ function build_query(query) {
     } else {
         // use /video_search endpoint when query is given so we get sorted results
         data.url = 'https://www.sbs.com.au/api/video_search/v2/';
+        // limit to 50 results
+        data.range = '1-50';
         data.q = query.query;
         data.parser = function(response) { return JSON.parse(response).entries; };
     }
@@ -223,8 +225,6 @@ function load_video_data(template) {
 
     search_videos(query, function(result, ...args) {
         result = process_video_data(result, ...args);
-        // TODO add some kind of 'load more' functionality
-        result = result.slice(0, 20);
         result = template.render(result);
 
         set_loading($('#search-form'), false);

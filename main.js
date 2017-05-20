@@ -223,6 +223,8 @@ function load_video_data(template) {
 
     search_videos(query, function(result, ...args) {
         result = process_video_data(result, ...args);
+        // TODO add some kind of 'load more' functionality
+        result = result.slice(0, 20);
         result = template.render(result);
 
         set_loading($('#search-form'), false);

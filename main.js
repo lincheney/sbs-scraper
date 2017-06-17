@@ -23,17 +23,11 @@ function bypass_cors(data) {
         delete data.data;
     }
 
-    // using https://github.com/gnuns/AllOrigins to bypass cors
-    data.url = 'https://allorigins.us/get?url=' + encodeURIComponent(url);
-    data.dataType = 'json';
-    var callback = data.success;
-    var error_cb = data.error;
-    data.success = function(data, status, xhr) {
-        if (data.status.http_code != 200) {
-            error_cb(xhr, data.status.http_code, 'error');
-        } else {
-            callback(data.contents, status, xhr);
-        }
+    // using https://github.com/Rob--W/cors-anywhere to bypass cors
+    data.url = 'https://cors-anywhere.herokuapp.com/' + url
+    data.dataType = 'text';
+    data.beforeSend = function(xhr) {
+        xhr.setRequestHeader('X-Requested-With', 'www.sbs.com.au');
     }
     return $.get(data);
 }

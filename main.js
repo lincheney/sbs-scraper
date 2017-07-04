@@ -131,7 +131,7 @@ function process_video_data(data, query) {
         video['published'] = datetime_to_string(video['pubDate']);
         video['expiry'] = datetime_to_string(video['media$expirationDate']);
 
-        if (query.minDuration && query.minDuration > (duration || 0)) {
+        if (query.minDuration && query.minDuration > (duration || query.minDuration)) {
             continue;
         }
         if (query.published && datetime_to_string(query.published) != video.published) {

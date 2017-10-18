@@ -14,7 +14,7 @@ function bitrate_from_url(url) {
 }
 
 function fetch_video_links(id, callback) {
-    var url = 'https://www.sbs.com.au/api/video_pdkvars/id/' + id;
+    var url = 'https://www.sbs.com.au/api/video_pdkvars/id/' + id + '?form=json';
 
     bypass_cors({
         url: url,
@@ -22,14 +22,15 @@ function fetch_video_links(id, callback) {
             callback({error: 'Error loading ' + url});
         },
         success: function(data, status, xhr) {
-            var smils = [];
-            data = data.split('&');
+            try {
+                data = JSON.parse(data).releaseUrls;
+            } catch(err) {
+                callback({error: 'Malformed data: ' + err});
+            }
             // grab all release urls
-            for(var i = 0; i < data.length; i ++) {
-                var kv = data[i].split('=', 2);
-                if (decodeURIComponent(kv[0]).startsWith('releaseUrls') && kv[1]) {
-                    smils.push('https:' + decodeURIComponent(kv[1]));
-                }
+            var smils = [];
+            for(var key in data) {
+                smils.push(data[key]);
             }
 
             fetch_smils(smils, [], function(links) {

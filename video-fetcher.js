@@ -30,7 +30,9 @@ function fetch_video_links(id, callback) {
             // grab all release urls
             var smils = [];
             for(var key in data) {
-                smils.push(data[key]);
+                if (data[key] != '') {
+                    smils.push(data[key]);
+                }
             }
 
             fetch_smils(smils, [], function(links) {

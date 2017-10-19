@@ -23,8 +23,7 @@ function bypass_cors(data) {
         delete data.data;
     }
 
-    // using https://github.com/Rob--W/cors-anywhere to bypass cors
-    data.url = 'https://cors-anywhere.herokuapp.com/' + url
+    data.url = 'https://galvanize-cors-proxy.herokuapp.com/' + url
     data.dataType = 'text';
     data.beforeSend = function(xhr) {
         xhr.setRequestHeader('X-Requested-With', 'www.sbs.com.au');

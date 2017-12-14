@@ -60,7 +60,8 @@ function parse_query(query) {
 }
 
 function build_query(query) {
-    var data = {m: '1', range: '1-1000000', form: 'json'};
+    // var data = {m: '1', range: '1-1000000', form: 'json'};
+    var data = {range: '1-1000000', form: 'json'};
     data.fields = ['title', 'id', 'media$content', 'media$expirationDate', 'pubDate', 'description', 'defaultThumbnailUrl'].join(',');
 
     if (query.published) {

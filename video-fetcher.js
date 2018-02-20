@@ -23,7 +23,7 @@ function fetch_video_links(id, callback) {
         },
         success: function(data, status, xhr) {
             try {
-                data = JSON.parse(data).releaseUrls;
+                data = JSON.parse(data).query.results.json.releaseUrls;
             } catch(err) {
                 callback({error: 'Malformed data: ' + err});
             }

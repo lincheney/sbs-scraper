@@ -75,6 +75,7 @@ function build_query(query) {
         data.url = 'https://www.sbs.com.au/api/video_search/v2/';
         // limit to 50 results
         data.range = '1-50';
+        data.m = '1'
         data.q = query.query;
     }
     data.parser = function(response) { return JSON.parse(response).query.results.json.entries; };

@@ -115,17 +115,17 @@ function process_video_data(data, query) {
         var video = videos[i];
 
         video['_id'] = /\d+$/.exec(video['id'])[0];
-        var thumbnail = slash_unescape(video['plmedia$defaultThumbnailUrl']);
+        var thumbnail = slash_unescape(video['plmedia_defaultThumbnailUrl']);
         // parse {ssl:https\://...:http\://...}/abc/xyz
         var parts = thumbnail.match(/({ssl:((\\.|[^\\])*):.*})?(.*)/);
         video['thumbnail'] = slash_unescape(parts[2] || '') + parts[4];
 
-        var duration = video['media$content'][0];
-        duration = (duration && duration['plfile$duration']);
+        var duration = video['media_content'][0];
+        duration = (duration && parseInt(duration['plfile_duration']));
 
         video['duration'] = duration_to_string(duration);
-        video['published'] = datetime_to_string(video['pubDate']);
-        video['expiry'] = datetime_to_string(video['media$expirationDate']);
+        video['published'] = datetime_to_string(parseInt(video['pubDate']));
+        video['expiry'] = datetime_to_string(parseInt(video['media_expirationDate']));
 
         if (query.minDuration && query.minDuration > (duration || query.minDuration)) {
             continue;
@@ -134,7 +134,7 @@ function process_video_data(data, query) {
             continue;
         }
 
-        var expiry = new Date(video['media$expirationDate']);
+        var expiry = new Date(parseInt(video['media_expirationDate']));
         if((expiry - (new Date(0))) == 0) {
             expiry = null;
         }

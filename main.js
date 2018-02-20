@@ -23,12 +23,10 @@ function bypass_cors(data) {
         delete data.data;
     }
 
-    data.url = 'https://galvanize-cors-proxy.herokuapp.com/' + url
+    data.url = 'https://query.yahooapis.com/v1/public/yql'
+    data.data = {q: 'SELECT * FROM json WHERE url=' + JSON.stringify(url), format: 'json'}
     data.dataType = 'text';
-    data.beforeSend = function(xhr) {
-        xhr.setRequestHeader('X-Requested-With', 'www.sbs.com.au');
-    }
-    return $.get(data);
+    return $.post(data);
 }
 
 function parse_query(query) {
@@ -70,18 +68,16 @@ function build_query(query) {
 
     if (query.videoId) {
         data.url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-od2-video/' + query.videoId;
-        data.parser = function(response) { return JSON.parse(response).entries; };
     } else if (query.query == '') {
         data.url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-section-sbstv';
-        data.parser = function(response) { return JSON.parse(response).entries; };
     } else {
         // use /video_search endpoint when query is given so we get sorted results
         data.url = 'https://www.sbs.com.au/api/video_search/v2/';
         // limit to 50 results
         data.range = '1-50';
         data.q = query.query;
-        data.parser = function(response) { return JSON.parse(response).entries; };
     }
+    data.parser = function(response) { return JSON.parse(response).query.results.json.entries; };
     return data;
 }
 

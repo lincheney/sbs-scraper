@@ -120,7 +120,7 @@ function process_video_data(data, query) {
         var parts = thumbnail.match(/({ssl:((\\.|[^\\])*):.*})?(.*)/);
         video['thumbnail'] = slash_unescape(parts[2] || '') + parts[4];
 
-        var duration = video['media_content'][0];
+        var duration = (video['media_content'] && video['media_content'][0]);
         duration = (duration && parseInt(duration['plfile_duration']));
 
         video['duration'] = duration_to_string(duration);

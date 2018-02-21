@@ -78,7 +78,13 @@ function build_query(query) {
         data.m = '1'
         data.q = query.query;
     }
-    data.parser = function(response) { return JSON.parse(response).query.results.json.entries; };
+    data.parser = function(response) {
+        var entries = JSON.parse(response).query.results.json.entries;
+        if (typeof(entries) == typeof({})) {
+            entries = [entries];
+        }
+        return entries;
+    };
     return data;
 }
 

@@ -80,7 +80,7 @@ function build_query(query) {
     }
     data.parser = function(response) {
         var entries = JSON.parse(response).query.results.json.entries;
-        if (typeof(entries) == typeof({})) {
+        if (!Array.isArray(entries)) {
             entries = [entries];
         }
         return entries;

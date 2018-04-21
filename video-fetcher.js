@@ -48,7 +48,9 @@ function fetch_smils(smils, links, callback) {
         return;
     }
 
-    var url = smils.pop();
+    var url = parse_url(smils.pop());
+    url.protocol = 'https';
+    url = url.href;
 
     $.get({
         url: url,

@@ -108,6 +108,7 @@ function search_videos(query, callback) {
                 data = parser(data);
             } catch(err) {
                 callback({error: 'Malformed data: ' + err});
+                return;
             }
             callback({videos: data}, parsed_query);
         }

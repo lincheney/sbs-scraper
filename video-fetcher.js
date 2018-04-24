@@ -26,6 +26,7 @@ function fetch_video_links(id, callback) {
                 data = JSON.parse(data).query.results.json.releaseUrls;
             } catch(err) {
                 callback({error: 'Malformed data: ' + err});
+                return;
             }
             // grab all release urls
             var smils = [];

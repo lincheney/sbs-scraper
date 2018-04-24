@@ -37,7 +37,16 @@ function parse_query(query) {
         if(tokens[i].startsWith('minDuration=')) {
             data['minDuration'] = tokens[i].split('=', 2)[1]*1;
         } else if(tokens[i].startsWith('published=')) {
-            var date = new Date(tokens[i].split('=', 2)[1]);
+            var date = tokens[i].split('=', 2)[1];
+            if(date == 'today') {
+                date = new Date();
+            } else if(date == 'yesterday') {
+                date = new Date();
+                date.setDate(date.getDate() - 1);
+            } else {
+                date = new Date(date);
+            }
+
             if (isNaN(date.getTime())) {
                 // invalid date
                 // TODO: proper error handling

@@ -37,9 +37,9 @@ function parse_query(query) {
         if(tokens[i].startsWith('minDuration=')) {
             var duration = tokens[i].split('=', 2)[1];
             if(duration.toLowerCase().endsWith('m')) {
-                duration = duration*60;
+                duration = duration.slice(0, -1)*60;
             } else if(duration.toLowerCase().endsWith('h')) {
-                duration = duration*3600;
+                duration = duration.slice(0, -1)*3600;
             } else {
                 duration = duration*1;
             }

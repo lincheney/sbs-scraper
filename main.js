@@ -35,7 +35,16 @@ function parse_query(query) {
 
     for(var i = 0; i < tokens.length; i ++) {
         if(tokens[i].startsWith('minDuration=')) {
-            data['minDuration'] = tokens[i].split('=', 2)[1]*1;
+            var duration = tokens[i].split('=', 2)[1];
+            if(duration.toLowerCase().endsWith('m')) {
+                duration = duration*60;
+            } else if(duration.toLowerCase().endsWith('h')) {
+                duration = duration*3600;
+            } else {
+                duration = duration*1;
+            }
+            data['minDuration'] = duration;
+
         } else if(tokens[i].startsWith('published=')) {
             var date = tokens[i].split('=', 2)[1];
             if(date == 'today') {
@@ -55,8 +64,10 @@ function parse_query(query) {
                 date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
                 data['published'] = date;
             }
+
         } else if(tokens[i].startsWith('videoId=')) {
             data['videoId'] = tokens[i].split('=', 2)[1];
+
         } else {
             data.query.push(tokens[i]);
         }

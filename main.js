@@ -170,6 +170,7 @@ function process_video_data(data, query) {
         if((expiry - (new Date(0))) == 0) {
             expiry = null;
         }
+        video['expired'] = (expiry && expiry < Date.now());
         // expires within 2 days
         video['expires_soon'] = (expiry && expiry < (Date.now() + 3600*1000*24*2));
 

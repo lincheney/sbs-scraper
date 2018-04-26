@@ -104,7 +104,9 @@ function build_query(query) {
             return [];
         }
         var entries = response.results.json.entries;
-        if (!Array.isArray(entries)) {
+        if (! entries) {
+            entries = [];
+        } else if (!Array.isArray(entries)) {
             entries = [entries];
         }
         return entries;

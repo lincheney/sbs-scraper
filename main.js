@@ -99,11 +99,7 @@ function build_query(query) {
         data.q = query.query;
     }
     data.parser = function(response) {
-        response = JSON.parse(response).query;
-        if (response.count == 0) {
-            return [];
-        }
-        var entries = response.results.json.entries;
+        var entries = JSON.parse(response).query.results.json.entries;
         if (! entries) {
             entries = [];
         } else if (!Array.isArray(entries)) {

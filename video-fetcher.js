@@ -24,7 +24,7 @@ function fetch_video_links(id, callback) {
         success: function(data, status, xhr) {
             try {
                 if (data.error) {
-                    callback({error: 'Error: ' + data.error.errorCode});
+                    callback({error: 'Error: ' + data.error.expandedErrorCode.errorCode});
                     return;
                 }
                 data = data.releaseUrls;

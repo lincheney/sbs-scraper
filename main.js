@@ -142,6 +142,7 @@ function process_video_data(data, query) {
         video['duration'] = duration_to_string(duration);
         video['published'] = datetime_to_string(parseInt(video['pubDate']));
         video['expiry'] = datetime_to_string(parseInt(video['media$expirationDate']));
+        video['language'] = video['pl1$language'];
 
         if (query.minDuration && query.minDuration > (duration || query.minDuration)) {
             continue;

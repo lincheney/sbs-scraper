@@ -72,7 +72,7 @@ function parse_query(query) {
 function build_query(query) {
     // var data = {m: '1', range: '1-1000000', form: 'json'};
     var data = {range: '1-1000000', form: 'json'};
-    data.fields = ['title', 'id', 'media$content', 'media$expirationDate', 'pubDate', 'description', 'defaultThumbnailUrl'].join(',');
+    // data.fields = ['title', 'id', 'media$content', 'media$expirationDate', 'pubDate', 'description', 'defaultThumbnailUrl'].join(',');
 
     if (query.published) {
         data['byPubDate'] = query.published.getTime() + '~' + (query.published.getTime() + 24*3600*1000);

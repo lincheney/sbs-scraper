@@ -131,7 +131,20 @@ function process_video_data(data, query) {
         var video = videos[i];
 
         video['_id'] = /\d+$/.exec(video['id'])[0];
-        var thumbnail = (video['plmedia$defaultThumbnailUrl'] && slash_unescape(video['plmedia$defaultThumbnailUrl']));
+
+        var thumbnail = null;
+        if (video['plmedia$defaultThumbnailUrl']) {
+            thumbnail = slash_unescape(video['plmedia$defaultThumbnailUrl']);
+        } else {
+            var thumbnails = video['media$thumbnails'];
+            for(var j = 0; j < thumbnails.length; j ++) {
+                if (thumbnails[j] && thumbnails[j]['plfile$downloadUrl']) {
+                    thumbnail = thumbnails[j]['plfile$downloadUrl'];
+                    break
+                }
+            }
+        }
+
         // parse {ssl:https\://...:http\://...}/abc/xyz
         var parts = (thumbnail && thumbnail.match(/({ssl:((\\.|[^\\])*):.*})?(.*)/));
         video['thumbnail'] = (parts && (slash_unescape(parts[2] || '') + parts[4]));

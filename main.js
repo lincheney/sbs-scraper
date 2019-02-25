@@ -147,7 +147,9 @@ function process_video_data(data, query) {
 
         // parse {ssl:https\://...:http\://...}/abc/xyz
         var parts = (thumbnail && thumbnail.match(/({ssl:((\\.|[^\\])*):.*})?(.*)/));
-        video['thumbnail'] = (parts && (slash_unescape(parts[2] || '') + parts[4]));
+        thumbnail = (parts && (slash_unescape(parts[2] || '') + parts[4]));
+        thumbnail = (thumbnail && thumbnail.replace(/(.*_)[a-z]*(\.[a-z]*)/i, '$1small$2'));
+        video['thumbnail'] = thumbnail;
 
         var duration = (video['media$content'] && video['media$content'][0]);
         duration = (duration && parseInt(duration['plfile$duration']));

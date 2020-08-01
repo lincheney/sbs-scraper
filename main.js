@@ -274,7 +274,17 @@ $(document).ready(function() {
     var video_template = Hogan.compile($('#video-template').html());
     var link_template = Hogan.compile($('#link-template').html());
 
+    window.onhashchange = function(e) {
+        $('#search-box').val(decodeURI(window.location.hash.replace(/^#/, '')));
+        $('#search-form').submit();
+        if (e) {
+            e.preventDefault();
+        }
+    };
+
     $('#search-form').on('submit', function(e) {
+        console.log('submit');
+        window.location.hash = $('#search-box').val();
         load_video_data(video_template);
         e.preventDefault();
     });
@@ -286,4 +296,5 @@ $(document).ready(function() {
 
     $('body').on('click', '.video-link-box', function(){ this.select(); });
 
+    window.onhashchange();
 })

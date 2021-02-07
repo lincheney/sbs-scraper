@@ -17,7 +17,16 @@ function slash_unescape(string) {
 }
 
 function bypass_cors(data) {
-    data.url = 'https://cors-anywhere.herokuapp.com/' + data.url;
+    var url = data.url + '?' + (new URLSearchParams(data.data).toString())
+    data.url = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    var success = data.success;
+    data.success = function(data, status, xhr) {
+        if (data.status.http_code && 200 <= data.status.http_code && data.status.http_code < 300) {
+            return success(JSON.parse(data.contents), data.status.http_code, xhr);
+        } else {
+            return data.error(xhr, data.status.http_code, null);
+        }
+    };
     return $.get(data);
 }
 

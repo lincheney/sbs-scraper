@@ -14,7 +14,7 @@ function bitrate_from_url(url) {
 }
 
 function fetch_video_links(id, callback) {
-    var url = 'https://www.sbs.com.au/api/video_pdkvars/id/' + id + '?form=json';
+    var url = 'https://www.sbs.com.au/api/video_pdkvars/id/' + id;
 
     bypass_cors({
         url: url,
@@ -22,6 +22,33 @@ function fetch_video_links(id, callback) {
             callback({error: 'Error loading ' + url});
         },
         success: function(data, status, xhr) {
+            // turn "x=1&y=2&y[z]=3" into {x:'1', y:{'':'2', 'z':'3'}}
+            data = new URLSearchParams(data);
+            // reverse sort so that deeply nested keys come first
+            data = Array.from(data.entries()).sort().reverse();
+            var parsed = {};
+            for(var [key, value] of data) {
+                var container = parsed;
+                while (true) {
+                    var match = /^(\w+)\[(\w+)\](.*)/.exec(key);
+                    if (match) {
+                        if (!(match[1] in container)) {
+                            container[match[1]] = {}
+                        }
+                        container = container[match[1]]
+                        key = match[2] + match[3];
+                    } else if (key in container) {
+                        container = container[key];
+                        key = '';
+                    } else {
+                        container[key] = value;
+                        break;
+                    }
+                }
+            }
+            data = parsed;
+
+
             try {
                 if (data.error) {
                     callback({error: 'Error: ' + data.error.expandedErrorCode.errorCode});

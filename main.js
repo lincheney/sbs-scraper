@@ -22,7 +22,7 @@ function bypass_cors(data) {
     var success = data.success;
     data.success = function(data, status, xhr) {
         if (data.status.http_code && 200 <= data.status.http_code && data.status.http_code < 300) {
-            return success(JSON.parse(data.contents), data.status.http_code, xhr);
+            return success(data.contents, data.status.http_code, xhr);
         } else {
             return data.error(xhr, data.status.http_code, null);
         }
@@ -122,7 +122,7 @@ function search_videos(query, callback) {
         },
         success: function(data, status, xhr) {
             try {
-                data = parser(data);
+                data = parser(JSON.parse(data));
             } catch(err) {
                 callback({error: 'Malformed data: ' + err});
                 return;

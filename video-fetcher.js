@@ -84,9 +84,14 @@ function fetch_smils(smils, links, callback) {
     url.protocol = 'https';
     url = url.href;
 
-    $.get({
+    var get = $.get;
+    if (url.startsWith('https://www.sbs.com.au/')) {
+        get = bypass_cors;
+    }
+
+    get({
         url: url,
-        dataType: 'xml',
+        // dataType: 'xml',
         error: function(xhr, status, error) {
             console.log('Error fetching: ' + url);
             fetch_smils(smils, links, callback);

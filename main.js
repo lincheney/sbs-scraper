@@ -22,6 +22,12 @@ function bypass_cors(data) {
     var success = data.success;
     data.success = function(data, status, xhr) {
         if (data.status.http_code && 200 <= data.status.http_code && data.status.http_code < 300) {
+
+            var match = data.contents.match(/^data:[a-zA-Z+/-]+;base64,/);
+            if (match) {
+                data.contents = atob(data.contents.slice(match[0].length));
+            }
+
             return success(data.contents, data.status.http_code, xhr);
         } else {
             return data.error(xhr, data.status.http_code, null);

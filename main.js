@@ -98,14 +98,18 @@ function build_query(query) {
     } else if (query.query == '') {
         data.url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-section-sbstv';
     } else {
-        // use /video_search endpoint when query is given so we get sorted results
-        data.url = 'https://www.sbs.com.au/api/video_search/v2/';
+        // use /video_universalsearch endpoint when query is given so we get sorted results
+        data.url = 'https://www.sbs.com.au/api/v3/video_universalsearch'
+        // data.context = 'odwebsite'
         // limit to 50 results
         data.range = '1-50';
-        data.m = '1'
+        // data.m = '1'
         data.q = query.query;
+        data.parser = function(response) {
+            return response.itemListElement.filter(v => v.type !== 'TVSeries');
+        }
     }
-    data.parser = function(response) {
+    data.parser = data.parser || function(response) {
         return response.entries;
     };
     return data;
@@ -139,7 +143,7 @@ function search_videos(query, callback) {
 }
 
 function process_video_data(data, query) {
-    var videos = (data.videos || []);
+    var videos = data.videos || [];
     data.videos = [];
 
     for(var i = 0; i < videos.length; i ++) {
@@ -147,49 +151,53 @@ function process_video_data(data, query) {
 
         video['_id'] = /\d+$/.exec(video['id'])[0];
 
-        var thumbnail = null;
+        video.thumbnail = null;
         if (video['plmedia$defaultThumbnailUrl']) {
-            thumbnail = slash_unescape(video['plmedia$defaultThumbnailUrl']);
+            video.thumbnail = slash_unescape(video['plmedia$defaultThumbnailUrl']);
+        } else if (video.thumbnailUrl) {
+            video.thumbnail = video.thumbnailUrl;
         } else {
             var thumbnails = video['media$thumbnails'];
             for(var j = 0; j < thumbnails.length; j ++) {
                 if (thumbnails[j] && thumbnails[j]['plfile$downloadUrl']) {
-                    thumbnail = thumbnails[j]['plfile$downloadUrl'];
+                    video.thumbnail = thumbnails[j]['plfile$downloadUrl'];
                     break
                 }
             }
         }
 
         // parse {ssl:https\://...:http\://...}/abc/xyz
-        var parts = (thumbnail && thumbnail.match(/({ssl:((\\.|[^\\])*):.*})?(.*)/));
-        thumbnail = (parts && (slash_unescape(parts[2] || '') + parts[4]));
-        thumbnail = (thumbnail && thumbnail.replace(/(.*_)[a-z]*(\.[a-z]*)/i, '$1small$2'));
-        video['thumbnail'] = thumbnail;
+        var parts = video.thumbnail?.match(/({ssl:((\\.|[^\\])*):.*})?(.*)/);
+        video.thumbnail = parts && (slash_unescape(parts[2] || '') + parts[4]);
+        video.thumbnail = video.thumbnail?.replace(/(.*_)[a-z]*(\.[a-z]*)/i, '$1small$2');
 
-        var duration = (video['media$content'] && video['media$content'][0]);
-        duration = (duration && parseInt(duration['plfile$duration']));
+        if (!video.duration) {
+            var media_content = video['media$content'] && video['media$content'][0];
+            video.duration = media_content && parseInt(media_content['plfile$duration']);
+        }
+        video.duration = duration_to_string(video.duration);
 
-        video['duration'] = duration_to_string(duration);
-        video['published'] = datetime_to_string(parseInt(video['pubDate']));
-        video['expiry'] = datetime_to_string(parseInt(video['media$expirationDate']));
-        video['language'] = video['pl1$language'];
+        video.published = datetime_to_string(video.offer?.availabilityStarts || parseInt(video.pubDate));
 
-        if (query.minDuration && query.minDuration > (duration || query.minDuration)) {
+        video.language = video['pl1$language'] || video.inLanguage.map(l => l.name).join(', ')
+
+        if (query.minDuration && query.minDuration > (video.duration || query.minDuration)) {
             continue;
         }
         if (query.published && datetime_to_string(query.published) != video.published) {
             continue;
         }
 
-        var expiry = new Date(parseInt(video['media$expirationDate']));
+        var expiry = video.offer?.availabilityStarts || new Date(parseInt(video['media$expirationDate']));
         if((expiry - (new Date(0))) == 0) {
             expiry = null;
         }
-        video['expired'] = (expiry && expiry < Date.now());
+        video.expiry = datetime_to_string(expiry);
+        video.expired = expiry && expiry < Date.now();
         // expires within 2 days
-        video['expires_soon'] = (expiry && expiry < (Date.now() + 3600*1000*24*2));
+        video.expires_soon = expiry && expiry < (Date.now() + 3600*1000*24*2);
 
-        data['videos'].push(video);
+        data.videos.push(video);
     }
 
     return data;

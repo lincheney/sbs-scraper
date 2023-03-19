@@ -149,7 +149,8 @@ function process_video_data(data, query) {
     for(var i = 0; i < videos.length; i ++) {
         var video = videos[i];
 
-        video['_id'] = /\d+$/.exec(video['id'])[0];
+        video.title = video.name;
+        video._id = /\d+$/.exec(video.id)[0];
 
         video.thumbnail = null;
         if (video['plmedia$defaultThumbnailUrl']) {

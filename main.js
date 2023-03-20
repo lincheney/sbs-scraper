@@ -180,7 +180,7 @@ function process_video_data(data, query) {
 
         video.published = datetime_to_string(video.offer?.availabilityStarts || parseInt(video.pubDate));
 
-        video.language = video['pl1$language'] || video.inLanguage.map(l => l.name).join(', ')
+        video.language = video['pl1$language'] || video.inLanguage?.map(l => l.name).join(', ')
 
         if (query.minDuration && query.minDuration > (video.duration || query.minDuration)) {
             continue;

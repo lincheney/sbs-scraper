@@ -172,17 +172,18 @@ function process_video_data(data, query) {
         video.thumbnail = parts && (slash_unescape(parts[2] || '') + parts[4]);
         video.thumbnail = video.thumbnail?.replace(/(.*_)[a-z]*(\.[a-z]*)/i, '$1small$2');
 
-        if (!video.duration) {
+        var duration = video.duration;
+        if (!duration) {
             var media_content = video['media$content'] && video['media$content'][0];
-            video.duration = media_content && parseInt(media_content['plfile$duration']);
+            duration = media_content && parseInt(media_content['plfile$duration']);
         }
-        video.duration = duration_to_string(video.duration);
+        video.duration = duration_to_string(duration);
 
         video.published = datetime_to_string(video.offer?.availabilityStarts || parseInt(video.pubDate));
 
         video.language = video['pl1$language'] || video.inLanguage?.map(l => l.name).join(', ')
 
-        if (query.minDuration && query.minDuration > (video.duration || query.minDuration)) {
+        if (query.minDuration && query.minDuration > (duration || query.minDuration)) {
             continue;
         }
         if (query.published && datetime_to_string(query.published) != video.published) {

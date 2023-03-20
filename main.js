@@ -149,7 +149,7 @@ function process_video_data(data, query) {
     for(var i = 0; i < videos.length; i ++) {
         var video = videos[i];
 
-        video.title = video.name;
+        video.title = video.title || video.name;
         video._id = /\d+$/.exec(video.id)[0];
 
         video.thumbnail = null;

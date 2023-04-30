@@ -3,10 +3,6 @@ const form = document.querySelector('#search-form');
 const body = document.querySelector('body');
 const video_results = document.querySelector('#video-results');
 
-// compile template
-let video_template = Hogan.compile(document.querySelector('#video-template').innerHTML);
-let link_template = Hogan.compile(document.querySelector('#link-template').innerHTML);
-
 function duration_to_string(seconds) {
     if (!seconds) {
         return 'unknown';
@@ -269,18 +265,79 @@ async function load_video_data(template) {
     video_results.innerHTML = '';
 
     const query = parse_query(box.value);
-    let results;
+    let data;
     try {
-        results = await search_videos(query);
-        results = process_video_data(results, query);
+        data = await search_videos(query);
+        data = process_video_data(data, query);
     } catch(e) {
         console.error(e);
-        results = {error: e.toString()};
+        data = {error: e.toString()};
     }
-    results = template.render(results);
-
     set_loading(form, false);
-    video_results.innerHTML = results;
+
+    const html = `
+    <div id='video-template'>
+        <ul class='list-group'>
+        ${(data.videos || []).map(video => `
+            <li class='list-group-item' id='video-${video._id}'>
+                <div class='row video-item'>
+                    <div class='col-md-3'>
+                        ${video.thumbnail ?
+                        `<img src='${video.thumbnail}' alt='' class='img-responsive video-thumbnail' />`
+                        : ''}
+                    </div>
+                    <div class='col-md-9'>
+                        <div class='video-title'>
+                            <h3>
+                                <a href='http://www.sbs.com.au/ondemand/video/${video._id}'>
+                                ${video.title}
+                                </a>
+                            </h3>
+                            ${video.expired ?
+                            `<span class='label label-danger'>Expired!</span>`
+                            : video.expires_soon ?
+                            `<span class='label label-warning'>Expiring soon!</span>`
+                            : ''}
+                        </div>
+
+                        <div>${video.description}</div>
+                        <div>
+                            Duration: <span class='text-info'>${video.duration}</span>
+                            ${video.language ?
+                            `&nbsp; |&nbsp; Language: <span class='text-info'>${video.language}</span>`
+                            : ''}
+                            ${video.published ?
+                            `&nbsp; |&nbsp; Published: <span class='text-info'>${video.published}</span>`
+                            : ''}
+                            ${video.expiry ?
+                            `&nbsp; |&nbsp; Expires: <span class='text-info'>${video.expiry}</span>`
+                            : ''}
+                        </div>
+                        <div class='row link-section'>
+                            <hr />
+                            <div class='col-md-2'>
+                                <button type="button" onclick="load_link_data(this)" class="btn btn-info link-fetcher input-control" data-video-id='${video._id}'>
+                                    <span class='non-spinner'>Get Links</span>
+                                    <div class='spinner' style='display: none'></div>
+                                </button>
+                            </div>
+                            <div class='col-md-10 link-item'></div>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        `).join('\n')}
+        </ul>
+
+        ${data.error ?
+        `<div class='alert alert-danger'>Error fetching videos: ${data.error}</div>`
+        : (data.videos || []).length == 0 ?
+        `<div class='alert alert-warning'>No videos found.</div>`
+        : ''}
+    </div>
+    `;
+
+    video_results.innerHTML = html;
 }
 
 async function load_link_data(button) {
@@ -290,18 +347,50 @@ async function load_link_data(button) {
     set_loading(link_section, true);
     link_item.innerHTML = '';
 
-    let result;
+    let data;
     try {
-        result = await fetch_video_links(id);
-        result = {links: process_links(result)}
+        data = await fetch_video_links(id);
+        data = {links: process_links(data)}
     } catch(e) {
         console.error(e);
-        result = {error: e.toString()};
+        data = {error: e.toString()};
     }
-
-    result = link_template.render(result);
     set_loading(link_section, false);
-    link_item.innerHTML = result;
+
+    const html = `
+    <div id='link-template'>
+        <table class='table link-table'><tbody>
+        ${(data.links || []).map(link => `
+            <tr class="link-title">
+                ${link.title ?
+                `<td colspan="3">
+                    <h5 class="link-title-text">${link.title}</h5>
+                </td>`
+                : ''}
+            </tr>
+
+            ${link.links.map(link => `
+            <tr>
+                <td class='video-type'><span class='label'>${link.type}</span></td>
+                ${link.urls.map(url => `
+                <td class='video-link'><span class='video-link'>
+                    <a href='${url.url}'>${url.name}</a>
+                </span></td>
+                `).join('\n')}
+            </tr>
+            `).join('\n')}
+        `).join('\n')}
+        </tbody></table>
+
+        ${data.error ?
+        `<div class='alert alert-danger'>${data.error}</div>`
+        : (data.links || []).length == 0 ?
+        `<div class='alert alert-danger'>No links found.</div>`
+        : ''}
+    </div>
+    `;
+
+    link_item.innerHTML = html;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -316,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     form.onsubmit = function(e) {
         window.location.hash = box.value;
-        load_video_data(video_template);
+        load_video_data();
         if (e) {
             e.preventDefault();
         }

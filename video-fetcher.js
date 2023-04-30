@@ -168,7 +168,6 @@ async function* get_urls_from_m3u(url) {
     }
     // data is in m3u playlist format
     data = data.split('\n#');
-    console.log(data);
     // ignore ext m3u header
     data.shift();
     for (const x of data) {
@@ -178,7 +177,7 @@ async function* get_urls_from_m3u(url) {
         }
         const resolution = /RESOLUTION=(\d+x\d+),/.exec(lines[0]);
         const backup = lines[1].match(/a(v?)-b\.m3u8\?/);
-        const bitrate = /BANDWIDTH=(\d+),/.exec(lines[0])[1] / 1000;
+        const bitrate = Math.floor(/BANDWIDTH=(\d+),/.exec(lines[0])[1] / 1000);
 
         yield {
             url: lines[1],

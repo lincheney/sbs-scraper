@@ -28,11 +28,17 @@ function bypass_cors(data) {
                 data.contents = atob(data.contents.slice(match[0].length));
             }
 
-            return success(data.contents, data.status.http_code, xhr);
+            return success(JSON.parse(data.contents), data.status.http_code, xhr);
         } else {
             return data.error(xhr, data.status.http_code, null);
         }
     };
+    return $.get(data);
+}
+
+function bypass_cors(data) {
+    var url = data.url + '?' + (new URLSearchParams(data.data).toString())
+    data.url = 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(url);
     return $.get(data);
 }
 
@@ -132,7 +138,7 @@ function search_videos(query, callback) {
         },
         success: function(data, status, xhr) {
             try {
-                data = parser(JSON.parse(data));
+                data = parser(data);
             } catch(err) {
                 callback({error: 'Malformed data: ' + err});
                 return;

@@ -1,8 +1,17 @@
+const box = document.querySelector('#search-box');
+const form = document.querySelector('#search-form');
+const body = document.querySelector('body');
+const video_results = document.querySelector('#video-results');
+
+// compile template
+let video_template = Hogan.compile(document.querySelector('#video-template').innerHTML);
+let link_template = Hogan.compile(document.querySelector('#link-template').innerHTML);
+
 function duration_to_string(seconds) {
     if (!seconds) {
         return 'unknown';
     }
-    var minutes = Math.round(seconds / 60);
+    const minutes = Math.round(seconds / 60);
     seconds = seconds % 60;
     return minutes + ':' + ('0' + seconds).slice(-2);
 }
@@ -16,53 +25,56 @@ function slash_unescape(string) {
     return string.replace(/\\(.)/g, '$1');
 }
 
-function bypass_cors(data) {
-    var url = data.url + '?' + (new URLSearchParams(data.data).toString())
-    data.url = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
-    var success = data.success;
-    data.success = function(data, status, xhr) {
-        if (data.status.http_code && 200 <= data.status.http_code && data.status.http_code < 300) {
+async function bypass_cors(url, params) {
+    if (params) {
+        url = url + '?' + (new URLSearchParams(params).toString());
+    }
 
-            var match = data.contents.match(/^data:[a-zA-Z+/-]+;base64,/);
-            if (match) {
-                data.contents = atob(data.contents.slice(match[0].length));
-            }
+    url = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    const response = await fetch(url);
+    const data = await response.json();
+    if (data.status.http_code && 200 <= data.status.http_code && data.status.http_code < 300) {
 
-            return success(JSON.parse(data.contents), data.status.http_code, xhr);
-        } else {
-            return data.error(xhr, data.status.http_code, null);
+        const match = data.contents.match(/^data:[a-zA-Z+/-]+;base64,/);
+        if (match) {
+            data.contents = atob(data.contents.slice(match[0].length));
         }
-    };
-    return $.get(data);
+
+        return data.contents;
+
+    } else {
+        throw new Error(data.status.http_code);
+    }
 }
 
-function bypass_cors(data) {
-    var url = data.url + '?' + (new URLSearchParams(data.data).toString())
-    data.url = 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(url);
-    return $.get(data);
+async function bypass_cors(url, params) {
+    url = url + '?' + (new URLSearchParams(params).toString())
+    url = 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(url);
+    const response = await fetch(url);
+    return (await response.text());
 }
 
 function parse_query(query) {
-    var tokens = query.split(/\s+/);
+    const tokens = query.split(/\s+/);
     data = {query: []};
 
-    for(var i = 0; i < tokens.length; i ++) {
-        if(tokens[i].startsWith('minDuration=')) {
-            var duration = tokens[i].split('=', 2)[1];
-            if(duration.toLowerCase().endsWith('m')) {
+    for (const token of tokens) {
+        if (token.startsWith('minDuration=')) {
+            let duration = token.split('=', 2)[1];
+            if (duration.toLowerCase().endsWith('m')) {
                 duration = duration.slice(0, -1)*60;
-            } else if(duration.toLowerCase().endsWith('h')) {
+            } else if (duration.toLowerCase().endsWith('h')) {
                 duration = duration.slice(0, -1)*3600;
             } else {
                 duration = duration*1;
             }
             data['minDuration'] = duration;
 
-        } else if(tokens[i].startsWith('published=')) {
-            var date = tokens[i].split('=', 2)[1];
-            if(date == 'today') {
+        } else if (token.startsWith('published=')) {
+            let date = token.split('=', 2)[1];
+            if (date == 'today') {
                 date = new Date();
-            } else if(date == 'yesterday') {
+            } else if (date == 'yesterday') {
                 date = new Date();
                 date.setDate(date.getDate() - 1);
             } else {
@@ -78,11 +90,11 @@ function parse_query(query) {
                 data['published'] = date;
             }
 
-        } else if(tokens[i].startsWith('videoId=')) {
-            data['videoId'] = tokens[i].split('=', 2)[1];
+        } else if (token.startsWith('videoId=')) {
+            data.videoId = token.split('=', 2)[1];
 
         } else {
-            data.query.push(tokens[i]);
+            data.query.push(token);
         }
     }
 
@@ -91,70 +103,53 @@ function parse_query(query) {
 }
 
 function build_query(query) {
-    // var data = {m: '1', range: '1-1000000', form: 'json'};
-    var data = {range: '1-1000000', form: 'json'};
-    // data.fields = ['title', 'id', 'media$content', 'media$expirationDate', 'pubDate', 'description', 'defaultThumbnailUrl'].join(',');
+    // const data = {m: '1', range: '1-1000000', form: 'json'};
+    const params = {range: '1-1000000', form: 'json'};
+    // params.fields = ['title', 'id', 'media$content', 'media$expirationDate', 'pubDate', 'description', 'defaultThumbnailUrl'].join(',');
+
+    let url;
+    let parser = function(response) {
+        return response.entries;
+    };
 
     if (query.published) {
-        data['byPubDate'] = query.published.getTime() + '~' + (query.published.getTime() + 24*3600*1000);
+        params.byPubDate = query.published.getTime() + '~' + (query.published.getTime() + 24*3600*1000);
     }
 
     if (query.videoId) {
-        data.url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-od2-video/' + query.videoId;
+        url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-od2-video/' + query.videoId;
     } else if (query.query == '') {
-        data.url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-section-sbstv';
+        url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-section-sbstv';
     } else {
         // use /video_universalsearch endpoint when query is given so we get sorted results
-        data.url = 'https://www.sbs.com.au/api/v3/video_universalsearch'
-        // data.context = 'odwebsite'
+        url = 'https://www.sbs.com.au/api/v3/video_universalsearch'
+        // params.context = 'odwebsite'
         // limit to 50 results
-        data.range = '1-50';
-        // data.m = '1'
-        data.q = query.query;
-        data.parser = function(response) {
+        params.range = '1-50';
+        // params.m = '1'
+        params.q = query.query;
+        parser = function(response) {
+            if (response.get?.status == 'failed') {
+                throw new Error(response.get.response.message);
+            }
             return response.itemListElement.filter(v => v.type !== 'TVSeries');
         }
     }
-    data.parser = data.parser || function(response) {
-        return response.entries;
-    };
-    return data;
+    return {params, url, parser};
 }
 
-function search_videos(query, callback) {
-    var parsed_query = parse_query(query);
-    query = build_query(parsed_query);
-    var url = query.url;
-    var parser = query.parser;
-
-    delete query.url;
-    delete query.parser;
-
-    bypass_cors({
-        url: url,
-        data: query,
-        error: function(xhr, status, error) {
-            callback({error: 'Failed to connect to API'});
-        },
-        success: function(data, status, xhr) {
-            try {
-                data = parser(data);
-            } catch(err) {
-                callback({error: 'Malformed data: ' + err});
-                return;
-            }
-            callback({videos: data}, parsed_query);
-        }
-    })
+async function search_videos(query) {
+    const {params, url, parser} = build_query(query);
+    const data = await bypass_cors(url, params);
+    const videos = parser(JSON.parse(data));
+    return {videos};
 }
 
 function process_video_data(data, query) {
-    var videos = data.videos || [];
+    const videos = data.videos || [];
     data.videos = [];
 
-    for(var i = 0; i < videos.length; i ++) {
-        var video = videos[i];
-
+    for (const video of videos) {
         video.title = video.title || video.name;
         video._id = /\d+$/.exec(video.id)[0];
 
@@ -164,23 +159,23 @@ function process_video_data(data, query) {
         } else if (video.thumbnailUrl) {
             video.thumbnail = video.thumbnailUrl;
         } else {
-            var thumbnails = video['media$thumbnails'];
-            for(var j = 0; j < thumbnails.length; j ++) {
-                if (thumbnails[j] && thumbnails[j]['plfile$downloadUrl']) {
-                    video.thumbnail = thumbnails[j]['plfile$downloadUrl'];
+            const thumbnails = video['media$thumbnails'];
+            for (const thumbnail of thumbnails) {
+                if (thumbnail && thumbnail['plfile$downloadUrl']) {
+                    video.thumbnail = thumbnail['plfile$downloadUrl'];
                     break
                 }
             }
         }
 
         // parse {ssl:https\://...:http\://...}/abc/xyz
-        var parts = video.thumbnail?.match(/({ssl:((\\.|[^\\])*):.*})?(.*)/);
+        const parts = video.thumbnail?.match(/({ssl:((\\.|[^\\])*):.*})?(.*)/);
         video.thumbnail = parts && (slash_unescape(parts[2] || '') + parts[4]);
         video.thumbnail = video.thumbnail?.replace(/(.*_)[a-z]*(\.[a-z]*)/i, '$1small$2');
 
-        var duration = video.duration;
+        let duration = video.duration;
         if (!duration) {
-            var media_content = video['media$content'] && video['media$content'][0];
+            const media_content = video['media$content'] && video['media$content'][0];
             duration = media_content && parseInt(media_content['plfile$duration']);
         }
         video.duration = duration_to_string(duration);
@@ -196,8 +191,8 @@ function process_video_data(data, query) {
             continue;
         }
 
-        var expiry = video.offer?.availabilityStarts || new Date(parseInt(video['media$expirationDate']));
-        if((expiry - (new Date(0))) == 0) {
+        let expiry = video.offer?.availabilityStarts || new Date(parseInt(video['media$expirationDate']));
+        if ((expiry - (new Date(0))) == 0) {
             expiry = null;
         }
         video.expiry = datetime_to_string(expiry);
@@ -211,24 +206,22 @@ function process_video_data(data, query) {
     return data;
 }
 
-function process_link_data(data) {
-    var links = (data.links || []);
-
+function process_links(links) {
     links = _.unique(links, 'url');
-    for(var i = 0; i < links.length; i ++) {
-        if (!links[i].bitrate) {
-            links[i].bitrate = bitrate_from_url(links[i].url);
+    for (const link of links) {
+        if (!link.bitrate) {
+            link.bitrate = bitrate_from_url(link.url);
         }
 
         // set a link name, using bitrate or file extension (or 'Link')
-        if (links[i].bitrate) {
-            links[i].name = links[i].bitrate + 'K';
+        if (link.bitrate) {
+            link.name = link.bitrate + 'K';
         } else {
-            var extension = /\.([^./?]+)(\?|$)/.exec(links[i].url);
+            const extension = /\.([^./?]+)(\?|$)/.exec(link.url);
             if (extension) {
-                links[i].name = extension[1].toUpperCase();
+                link.name = extension[1].toUpperCase();
             } else {
-                links[i].name = 'Link';
+                link.name = 'Link';
             }
         }
     }
@@ -239,7 +232,7 @@ function process_link_data(data) {
 
     // group all the links by type
     links = _.partition(links, 'backup');
-    var backup_links = links[0];
+    let backup_links = links[0];
     links = links[1];
 
     links = format_links(links);
@@ -249,13 +242,12 @@ function process_link_data(data) {
         {links: backup_links, title: 'Backup links'},
     ];
     links = _.filter(links, function(l) { return l.links.length; });
-    data.links = links;
-    return data;
+    return links;
 }
 
 function format_links(links) {
     links = _.pairs(_.groupBy(links, 'type'));
-    for(var i = 0; i < links.length; i ++) {
+    for(let i = 0; i < links.length; i ++) {
         links[i] = {type: links[i][0], urls: links[i][1]};
     }
     links = _.sortBy(links, 'type');
@@ -263,69 +255,72 @@ function format_links(links) {
 }
 
 function set_loading(context, loading) {
-    context.find('.input-control').prop('disabled', loading);
-    context.find('.non-spinner').toggle(!loading);
-    context.find('.spinner').toggle(loading);
+    context.querySelector('.input-control').disabled = loading;
+    context.querySelector('.non-spinner').style.display = loading ? 'none' : '';
+    context.querySelector('.spinner').style.display = loading ? '' : 'none';
 }
 
-function load_video_data(template) {
-    var query = $('#search-box').val();
-    if (query == '') {
+async function load_video_data(template) {
+    if (box.value == '') {
         return;
     }
 
-    set_loading($('#search-form'), true);
-    $('#video-results').html('');
+    set_loading(form, true);
+    video_results.innerHTML = '';
 
-    search_videos(query, function(result, ...args) {
-        result = process_video_data(result, ...args);
-        result = template.render(result);
+    const query = parse_query(box.value);
+    let results;
+    try {
+        results = await search_videos(query);
+        results = process_video_data(results, query);
+    } catch(e) {
+        console.error(e);
+        results = {error: e.toString()};
+    }
+    results = template.render(results);
 
-        set_loading($('#search-form'), false);
-        $('#video-results').html(result);
-    });
+    set_loading(form, false);
+    video_results.innerHTML = results;
 }
 
-function load_link_data(template, id) {
-    set_loading($('#video-' + id + ' .link-section'), true);
-    $('#video-' + id + ' .link-item').html('');
+async function load_link_data(button) {
+    const id = button.getAttribute('data-video-id');
+    const link_section = document.querySelector(`#video-${id} .link-section`);
+    const link_item = document.querySelector(`#video-${id} .link-item`);
+    set_loading(link_section, true);
+    link_item.innerHTML = '';
 
-    fetch_video_links(id, function(result) {
-        result = process_link_data(result)
-        result = template.render(result);
+    let result;
+    try {
+        result = await fetch_video_links(id);
+        result = {links: process_links(result)}
+    } catch(e) {
+        console.error(e);
+        result = {error: e.toString()};
+    }
 
-        set_loading($('#video-' + id + ' .link-section'), false);
-        $('#video-' + id + ' .link-item').html(result);
-    });
+    result = link_template.render(result);
+    set_loading(link_section, false);
+    link_item.innerHTML = result;
 }
 
-$(document).ready(function() {
-
-    // compile template
-    var video_template = Hogan.compile($('#video-template').html());
-    var link_template = Hogan.compile($('#link-template').html());
+document.addEventListener('DOMContentLoaded', function() {
 
     window.onhashchange = function(e) {
-        $('#search-box').val(decodeURI(window.location.hash.replace(/^#/, '')));
-        $('#search-form').submit();
+        box.value = decodeURI(window.location.hash.replace(/^#/, ''));
+        form.onsubmit();
         if (e) {
             e.preventDefault();
         }
     };
 
-    $('#search-form').on('submit', function(e) {
-        console.log('submit');
-        window.location.hash = $('#search-box').val();
+    form.onsubmit = function(e) {
+        window.location.hash = box.value;
         load_video_data(video_template);
-        e.preventDefault();
-    });
-
-    $('body').on('click', 'button.link-fetcher', function() {
-        var id = this.getAttribute('data-video-id');
-        load_link_data(link_template, id);
-    });
-
-    $('body').on('click', '.video-link-box', function(){ this.select(); });
+        if (e) {
+            e.preventDefault();
+        }
+    };
 
     window.onhashchange();
 })

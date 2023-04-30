@@ -203,7 +203,8 @@ function process_video_data(data, query) {
 }
 
 function process_links(links) {
-    links = _.unique(links, 'url');
+    // unique by url
+    links = Object.values(Object.fromEntries(links.map(link => [link.url, link])))
     for (const link of links) {
         if (!link.bitrate) {
             link.bitrate = bitrate_from_url(link.url);
@@ -227,9 +228,8 @@ function process_links(links) {
     });
 
     // group all the links by type
-    links = _.partition(links, 'backup');
-    let backup_links = links[0];
-    links = links[1];
+    let backup_links = links.filter(l => l.backup);
+    links = links.filter(l => ~l.backup);
 
     links = format_links(links);
     backup_links = format_links(backup_links);
@@ -237,16 +237,19 @@ function process_links(links) {
         {links: links},
         {links: backup_links, title: 'Backup links'},
     ];
-    links = _.filter(links, function(l) { return l.links.length; });
+    links = links.filter(l => l.links.length);
     return links;
 }
 
 function format_links(links) {
-    links = _.pairs(_.groupBy(links, 'type'));
-    for(let i = 0; i < links.length; i ++) {
-        links[i] = {type: links[i][0], urls: links[i][1]};
+    const groups = {}
+    for (const link of links) {
+        groups[link.type] = groups[link.type] || []
+        groups[link.type].push(link)
     }
-    links = _.sortBy(links, 'type');
+
+    links = Object.entries(groups).map(kv => ({type: kv[0], urls: kv[1]}));
+    links = links.map(l => [l.type, l]).sort().map(kv => kv[1]);
     return links;
 }
 

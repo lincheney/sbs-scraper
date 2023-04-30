@@ -101,7 +101,7 @@ async function* fetch_smils(smils) {
         }
 
         let sources = Array.from(data.querySelectorAll('video').values()).map(node => node.getAttribute('src'));
-        sources = _.unique(sources);
+        sources = new Set(sources); // unique
 
         for await (const link of parse_video_sources(sources, base)) {
             yield link;

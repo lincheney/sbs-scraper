@@ -3,6 +3,13 @@ const form = document.querySelector('#search-form');
 const body = document.querySelector('body');
 const video_results = document.querySelector('#video-results');
 
+function html_escape(text) {
+    const textNode = document.createTextNode(text);
+    const node = document.createElement('p');
+    node.appendChild(textNode);
+    return node.innerHTML.replaceAll('"', '&quot;');
+}
+
 function duration_to_string(seconds) {
     if (!seconds) {
         return 'unknown';
@@ -282,18 +289,18 @@ async function load_video_data(template) {
     <div id='video-template'>
         <ul class='list-group'>
         ${(data.videos || []).map(video => `
-            <li class='list-group-item' id='video-${video._id}'>
+            <li class='list-group-item' id='video-${html_escape(video._id)}'>
                 <div class='row video-item'>
                     <div class='col-md-3'>
                         ${video.thumbnail ?
-                        `<img src='${video.thumbnail}' alt='' class='img-responsive video-thumbnail' />`
+                        `<img src='${html_escape(video.thumbnail)}' alt='' class='img-responsive video-thumbnail' />`
                         : ''}
                     </div>
                     <div class='col-md-9'>
                         <div class='video-title'>
                             <h3>
-                                <a href='http://www.sbs.com.au/ondemand/video/${video._id}'>
-                                ${video.title}
+                                <a href='http://www.sbs.com.au/ondemand/video/${html_escape(video._id)}'>
+                                ${html_escape(video.title)}
                                 </a>
                             </h3>
                             ${video.expired ?
@@ -303,23 +310,23 @@ async function load_video_data(template) {
                             : ''}
                         </div>
 
-                        <div>${video.description}</div>
+                        <div>${html_escape(video.description)}</div>
                         <div>
-                            Duration: <span class='text-info'>${video.duration}</span>
+                            Duration: <span class='text-info'>${html_escape(video.duration)}</span>
                             ${video.language ?
-                            `&nbsp; |&nbsp; Language: <span class='text-info'>${video.language}</span>`
+                            `&nbsp; |&nbsp; Language: <span class='text-info'>${html_escape(video.language)}</span>`
                             : ''}
                             ${video.published ?
-                            `&nbsp; |&nbsp; Published: <span class='text-info'>${video.published}</span>`
+                            `&nbsp; |&nbsp; Published: <span class='text-info'>${html_escape(video.published)}</span>`
                             : ''}
                             ${video.expiry ?
-                            `&nbsp; |&nbsp; Expires: <span class='text-info'>${video.expiry}</span>`
+                            `&nbsp; |&nbsp; Expires: <span class='text-info'>${html_escape(video.expiry)}</span>`
                             : ''}
                         </div>
                         <div class='row link-section'>
                             <hr />
                             <div class='col-md-2'>
-                                <button type="button" onclick="load_link_data(this)" class="btn btn-info link-fetcher input-control" data-video-id='${video._id}'>
+                                <button type="button" onclick="load_link_data(this)" class="btn btn-info link-fetcher input-control" data-video-id='${html_escape(video._id)}'>
                                     <span class='non-spinner'>Get Links</span>
                                     <div class='spinner' style='display: none'></div>
                                 </button>
@@ -333,7 +340,7 @@ async function load_video_data(template) {
         </ul>
 
         ${data.error ?
-        `<div class='alert alert-danger'>Error fetching videos: ${data.error}</div>`
+        `<div class='alert alert-danger'>Error fetching videos: ${html_escape(data.error)}</div>`
         : (data.videos || []).length == 0 ?
         `<div class='alert alert-warning'>No videos found.</div>`
         : ''}
@@ -367,17 +374,17 @@ async function load_link_data(button) {
             <tr class="link-title">
                 ${link.title ?
                 `<td colspan="3">
-                    <h5 class="link-title-text">${link.title}</h5>
+                    <h5 class="link-title-text">${html_escape(link.title)}</h5>
                 </td>`
                 : ''}
             </tr>
 
             ${link.links.map(link => `
             <tr>
-                <td class='video-type'><span class='label'>${link.type}</span></td>
+                <td class='video-type'><span class='label'>${html_escape(link.type)}</span></td>
                 ${link.urls.map(url => `
                 <td class='video-link'><span class='video-link'>
-                    <a href='${url.url}'>${url.name}</a>
+                    <a href='${html_escape(url.url)}'>${html_escape(url.name)}</a>
                 </span></td>
                 `).join('\n')}
             </tr>
@@ -386,7 +393,7 @@ async function load_link_data(button) {
         </tbody></table>
 
         ${data.error ?
-        `<div class='alert alert-danger'>${data.error}</div>`
+        `<div class='alert alert-danger'>${html_escape(data.error)}</div>`
         : (data.links || []).length == 0 ?
         `<div class='alert alert-danger'>No links found.</div>`
         : ''}

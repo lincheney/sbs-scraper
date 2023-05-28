@@ -171,6 +171,9 @@ async function* get_urls_from_m3u(url) {
         console.log(`Error fetching: ${url}`);
         return;
     }
+    url = parse_url(url)
+    const base = `${url.protocol}//${url.hostname}${url.pathname.replace(/\/[^/]*$/, '/')}`;
+
     // data is in m3u playlist format
     data = data.split('\n#');
     // ignore ext m3u header
@@ -184,8 +187,13 @@ async function* get_urls_from_m3u(url) {
         const backup = lines[1].match(/a(v?)-b\.m3u8\?/);
         const bitrate = Math.floor(/BANDWIDTH=(\d+),/.exec(lines[0])[1] / 1000);
 
+        let u = lines[1];
+        if (!parse_url(u).hostname) {
+            u = base + u
+        }
+
         yield {
-            url: lines[1],
+            url: u,
             bitrate,
             backup,
             type: resolution ? 'M3U' : 'AUDIO',

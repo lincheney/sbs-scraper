@@ -217,15 +217,17 @@ function process_links(links) {
             link.bitrate = bitrate_from_url(link.url);
         }
 
-        // set a link name, using bitrate or file extension (or 'Link')
-        if (link.bitrate) {
-            link.name = link.bitrate + 'K';
-        } else {
-            const extension = /\.([^./?]+)(\?|$)/.exec(link.url);
-            if (extension) {
-                link.name = extension[1].toUpperCase();
+        if (!link.name) {
+            // set a link name, using bitrate or file extension (or 'Link')
+            if (link.bitrate) {
+                link.name = link.bitrate + 'K';
             } else {
-                link.name = 'Link';
+                const extension = /\.([^./?]+)(\?|$)/.exec(link.url);
+                if (extension) {
+                    link.name = extension[1].toUpperCase();
+                } else {
+                    link.name = 'Link';
+                }
             }
         }
     }

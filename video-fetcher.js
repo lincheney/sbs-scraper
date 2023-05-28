@@ -120,8 +120,13 @@ async function* parse_video_sources(sources, base) {
             yield {type: 'Direct', url: src};
         } else if (url.pathname.endsWith('.m3u8')) {
             // m3u8
+            let found = false;
             for await (const link of get_urls_from_m3u(src)) {
+                found = true;
                 yield link
+            }
+            if (found) {
+                yield {type: 'M3U', url: src, name: 'ALL', bitrate: Infinity};
             }
         } else if (url.pathname.endsWith('/manifest.f4m')) {
             // f4m/hds

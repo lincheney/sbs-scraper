@@ -313,7 +313,7 @@ async function load_video_data(template) {
                         </div>
 
                         <div>${html_escape(video.description)}</div>
-                        <div>
+                        <div class="video-info">
                             Duration: <span class='text-info'>${html_escape(video.duration)}</span>
                             ${video.language ?
                             `&nbsp; |&nbsp; Language: <span class='text-info'>${html_escape(video.language)}</span>`

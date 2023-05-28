@@ -1,5 +1,5 @@
 body {
-    margin: 0 20vh;
+    margin: 0 10vw;
     padding-top: 70px;
 }
 
@@ -9,7 +9,7 @@ hr {
 }
 
 #search-bar {
-    padding: 2vh 20vh;
+    padding: 2vh 10vw;
     background: inherit;
     border-width: 0 0 1px 0;
     border-color: rgba(255, 255, 255, 0.1);
@@ -47,14 +47,18 @@ hr {
     margin: auto 15px auto 0;
 }
 
+.video-info {
+    color: #aaa;
+}
+
 button.link-fetcher {
     margin-top: 4px;
     padding: 5px 10px;
     height: 45px;
 }
 
-.link-section {
-    margin-right: 10px;
+.link-template {
+    overflow-x: auto;
 }
 .link-table {
     margin-bottom: 0;

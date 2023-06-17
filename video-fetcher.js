@@ -1,7 +1,12 @@
 function parse_url(url) {
-    const parser = document.createElement('a');
-    parser.href = url;
-    return parser;
+    try {
+        return new URL(url);
+    } catch (e) {
+        if (e instanceof TypeError) {
+            return null;
+        }
+        throw e;
+    }
 }
 
 function bitrate_from_url(url) {
@@ -188,7 +193,7 @@ async function* get_urls_from_m3u(url) {
         const bitrate = Math.floor(/BANDWIDTH=(\d+),/.exec(lines[0])[1] / 1000);
 
         let u = lines[1];
-        if (!parse_url(u).hostname) {
+        if (!parse_url(u)) {
             u = base + u
         }
 

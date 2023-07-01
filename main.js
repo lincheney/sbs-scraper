@@ -194,7 +194,7 @@ function process_video_data(data, query) {
             continue;
         }
 
-        let expiry = video.offer?.availabilityStarts || new Date(parseInt(video['media$expirationDate']));
+        let expiry = video.offer?.availabilityEnds || new Date(parseInt(video['media$expirationDate']));
         if ((expiry - (new Date(0))) == 0) {
             expiry = null;
         }

@@ -324,7 +324,7 @@ async function load_video_data(template) {
                             ${video.expiry ?
                             `&nbsp; |&nbsp; Expires: <span class='text-info'>${html_escape(video.expiry)}</span>`
                             : ''}
-                            &nbsp; |&nbsp; <a style='opacity: 70%' href='https://www.imdb.com/find/?s=tt&q=${html_escape(encodeURI(video.title))}'>IMDB</a>
+                            &nbsp; |&nbsp; <a style='opacity: 70%' target='_blank' href='https://www.imdb.com/find/?s=tt&q=${html_escape(encodeURI(video.title))}'>IMDB</a>
                         </div>
                         <div class='row link-section'>
                             <hr />

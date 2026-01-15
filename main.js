@@ -301,7 +301,7 @@ async function load_video_data(template) {
                     <div class='col-md-9'>
                         <div class='video-title'>
                             <h3>
-                                <a href='http://www.sbs.com.au/ondemand/video/${html_escape(video._id)}'>
+                                <a href="http://www.sbs.com.au/ondemand/video/${html_escape(video._id)}">
                                 ${html_escape(video.title)}
                                 </a>
                             </h3>
@@ -324,12 +324,12 @@ async function load_video_data(template) {
                             ${video.expiry ?
                             `&nbsp; |&nbsp; Expires: <span class='text-info'>${html_escape(video.expiry)}</span>`
                             : ''}
-                            &nbsp; |&nbsp; <a style='opacity: 70%' target='_blank' href='https://www.imdb.com/find/?s=tt&q=${html_escape(encodeURI(video.title))}'>IMDB</a>
+                            &nbsp; |&nbsp; <a style='opacity: 70%' target='_blank' href="https://www.imdb.com/find/?s=tt&q=${html_escape(encodeURI(video.title))}">IMDB</a>
                         </div>
                         <div class='row link-section'>
                             <hr />
                             <div class='col-md-2'>
-                                <button type="button" onclick="load_link_data(this)" class="btn btn-info link-fetcher input-control" data-video-id='${html_escape(video._id)}'>
+                                <button type="button" onclick="load_link_data(this)" class="btn btn-info link-fetcher input-control" data-video-id="${html_escape(video._id)}">
                                     <span class='non-spinner'>Get Links</span>
                                     <div class='spinner' style='display: none'></div>
                                 </button>

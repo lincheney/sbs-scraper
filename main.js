@@ -105,62 +105,78 @@ function parse_query(query) {
     return data;
 }
 
-function build_query(query) {
-    // const data = {m: '1', range: '1-1000000', form: 'json'};
-    const params = {range: '1-1000000', form: 'json'};
-    // params.fields = ['title', 'id', 'media$content', 'media$expirationDate', 'pubDate', 'description', 'defaultThumbnailUrl'].join(',');
-
-    let url;
-    let parser = function(response) {
-        return response.entries;
-    };
-
-    if (query.published) {
-        params.byPubDate = query.published.getTime() + '~' + (query.published.getTime() + 24*3600*1000);
-    }
-
-    if (query.videoId) {
-        url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-od2-video/' + query.videoId;
-    } else if (query.query == '') {
-        url = 'https://www.sbs.com.au/api/video_feed/f/Bgtm9B/sbs-section-sbstv';
-    } else {
-        // use /video_universalsearch endpoint when query is given so we get sorted results
-        url = 'https://www.sbs.com.au/api/v3/video_universalsearch'
-        // params.context = 'odwebsite'
-        // limit to 50 results
-        params.range = '1-50';
-        // params.m = '1'
-        params.q = query.query;
-        parser = function(response) {
-            if (response.get?.status == 'failed') {
-                throw new Error(response.get.response.message);
-            }
-            return response.itemListElement.filter(v => v.type !== 'TVSeries');
+async function load_collection(url, previous) {
+    const params = {sort: 'recent', limit: '100'};
+    if (previous) {
+        if (!previous.meta.nextCursor) {
+            return;
         }
+        params.cursor = previous.meta.nextCursor;
     }
-    return {params, url, parser};
+    url = url + '?' + (new URLSearchParams(params).toString());
+    const response = await fetch(url);
+    const data = response.json();
+    return data;
+}
+
+async function load_until_less_than_date(url, date) {
+    date = date && date.toISOString().split('T')[0];
+    let data = [];
+    data.push(await load_collection(url));
+    while (date && data.at(-1).items.length > 0 && data.at(-1).items.every(x => x.availability.start >= date)) {
+        data.push(await load_collection(url, data.at(-1)));
+    }
+    return data.flatMap(x => x.items);
 }
 
 async function search_videos(query) {
-    const {params, url, parser} = build_query(query);
-    const data = await bypass_cors(url, params);
-    const videos = parser(JSON.parse(data));
-    return {videos};
+
+    let data;
+    if (query.videoId) {
+        const response = await fetch(`https://catalogue.pr.sbsod.com/mpx-media/${query.videoId}`);
+        data = [await response.json()];
+    } else if (query.query === '') {
+        // grab everything!
+        const urls = [
+            'https://catalogue.pr.sbsod.com/collections/all-movies',
+            'https://catalogue.pr.sbsod.com/collections/all-tv-shows',
+            'https://catalogue.pr.sbsod.com/collections/news-and-current-affairs-tv-shows',
+            'https://catalogue.pr.sbsod.com/collections/browse-all-sport',
+        ];
+        const responses = await Promise.all(urls.map(url => load_until_less_than_date(url, query.published)));
+        data = responses.flat();
+    } else {
+        const url = 'https://content-search.pr.sbsod.com/catalogue' + '?' + new URLSearchParams({q: query.query}).toString();
+        const response = await fetch(url);
+        data = (await response.json()).items;
+    }
+
+    return {videos: data};
 }
 
 function process_video_data(data, query) {
     const videos = data.videos || [];
     data.videos = [];
 
-    for (const video of videos) {
+    for (let video of videos) {
+        if (video.entityType === 'TV_SERIES' || video.entityType === 'NEWS_SERIES') {
+            // mmmmm
+            video = {...video, ...video.featured};
+        }
+
         video.title = video.title || video.name;
-        video._id = /\d+$/.exec(video.id)[0];
+        video._id = video.mpxMediaID || /\d+$/.exec(video.id)?.[0];
+        if (!video._id) {
+            continue;
+        }
 
         video.thumbnail = null;
         if (video['plmedia$defaultThumbnailUrl']) {
             video.thumbnail = slash_unescape(video['plmedia$defaultThumbnailUrl']);
         } else if (video.thumbnailUrl) {
             video.thumbnail = video.thumbnailUrl;
+        } else if (video.images) {
+            video.thumbnail = `https://image.pr.sbsod.com/${video.images[0].id}?width=500&type=webp`
         } else {
             const thumbnails = video['media$thumbnails'];
             for (const thumbnail of thumbnails) {
@@ -180,12 +196,14 @@ function process_video_data(data, query) {
         if (!duration) {
             const media_content = video['media$content'] && video['media$content'][0];
             duration = media_content && parseInt(media_content['plfile$duration']);
+        } else if (duration.startsWith('PT')) {
+            duration = Temporal.Duration.from(duration).total({unit: 'seconds'});
         }
         video.duration = duration_to_string(duration);
 
-        video.published = datetime_to_string(video.offer?.availabilityStarts || parseInt(video.pubDate));
+        video.published = datetime_to_string(video.offer?.availabilityStarts || video.availability?.start || parseInt(video.pubDate));
 
-        video.language = video['pl1$language'] || video.inLanguage?.map(l => l.name).join(', ')
+        video.language = video['pl1$language'] || video.inLanguage?.map(l => l.name).join(', ') || video.languages?.join(', ');
 
         if (query.minDuration && query.minDuration > (duration || query.minDuration)) {
             continue;
@@ -194,14 +212,17 @@ function process_video_data(data, query) {
             continue;
         }
 
-        let expiry = video.offer?.availabilityEnds || new Date(parseInt(video['media$expirationDate']));
-        if ((expiry - (new Date(0))) == 0) {
+        let expiry = video.offer?.availabilityEnds || video.availability?.end || parseInt(video['media$expirationDate']);
+        if ((new Date(expiry) - (new Date(0))) == 0) {
             expiry = null;
         }
         video.expiry = datetime_to_string(expiry);
         video.expired = expiry && expiry < Date.now();
         // expires within 2 days
         video.expires_soon = expiry && expiry < (Date.now() + 3600*1000*24*2);
+
+        video.released = video.releaseYear;
+        video.live = video.liveStream;
 
         data.videos.push(video);
     }
@@ -310,6 +331,9 @@ async function load_video_data(template) {
                             : video.expires_soon ?
                             `<span class='label label-warning'>Expiring soon!</span>`
                             : ''}
+                            ${video.live ?
+                            `<span class='label label-info'>Live</span>`
+                            : ''}
                         </div>
 
                         <div>${html_escape(video.description)}</div>
@@ -323,6 +347,9 @@ async function load_video_data(template) {
                             : ''}
                             ${video.expiry ?
                             `&nbsp; |&nbsp; Expires: <span class='text-info'>${html_escape(video.expiry)}</span>`
+                            : ''}
+                            ${video.released ?
+                            `&nbsp; |&nbsp; Released: <span class='text-info'>${html_escape(video.released)}</span>`
                             : ''}
                             &nbsp; |&nbsp; <a style='opacity: 70%' target='_blank' href="https://www.imdb.com/find/?s=tt&q=${html_escape(encodeURI(video.title))}">IMDB</a>
                         </div>
